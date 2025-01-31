@@ -1,0 +1,56 @@
+# Ignore Python cache and compiled files
+**/__pycache__
+**/*.pyc
+**/*.pyo
+**/*.pyd
+
+# Ignore virtual environments
+venv/
+env/
+.venv/
+
+# Unit test cache
+htmlcov/
+.tox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
+.pytest_cache/
+
+# Ignore logs and temporary files
+*.log
+*.tmp
+*.bak
+*.swp
+*.swo
+*.swn
+*.~lock.*
+
+# Ignore system-specific files
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# Ignore git and other VCS
+.git/
+.gitignore
+.gitattributes
+.hg/
+.hgignore
+.svn/
+
+# Ignore build artifacts
+build/
+dist/
+*.egg-info/
+*.egg
+.eggs/
+
+# Ignore dotenv files
+.env
+.env.*

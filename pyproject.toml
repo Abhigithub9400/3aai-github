@@ -1,0 +1,118 @@
+[tool.ruff]
+# Exclude a variety of commonly ignored directories.
+show-fixes = true
+exclude = [
+    ".bzr",
+    ".direnv",
+    ".eggs",
+    ".git",
+    ".git-rewrite",
+    ".hg",
+    ".ipynb_checkpoints",
+    ".mypy_cache",
+    ".nox",
+    ".pants.d",
+    ".pyenv",
+    ".pytest_cache",
+    ".pytype",
+    ".ruff_cache",
+    ".svn",
+    ".tox",
+    ".venv",
+    ".vscode",
+    "__pypackages__",
+    "_build",
+    "buck-out",
+    "build",
+    "dist",
+    "node_modules",
+    "site-packages",
+    "venv",
+    "utils",
+    "scripts"
+]
+# Same as Black.
+line-length = 140
+indent-width = 4
+target-version = "py312"
+
+[tool.ruff.lint]
+preview = false
+select = [
+    "ASYNC", # flake8-asyncio
+    "C4", # flake8-comprehensions
+    "E", # pycodestyle
+    "F", # Pyflakes
+    #    "FAST", # FastAPI
+    "I", # isort
+    "UP", # pyupgrade
+    "B", # flake8-bugbear
+    "SIM", # flake8-simplify
+    #    "D", # pydocstyle,
+    "COM", # flake8-commas
+    "R", # Refactoring
+]
+ignore = [
+    "E501", # line too long, handled by black
+    "B008", # do not perform function calls in argument defaults
+    "C901", # too complex
+    "B019", # memory leaks
+    "W191", # indentation contains tabs
+    "COM812", # comma-separated tuple unpacking,
+    "RET504", # return statement in finally block
+    "E402", # module level import not at top of file,
+    "E731", # do not assign a lambda expression,
+    "F403" # unable to detect undefined names
+]
+fixable = ["ALL"]
+extend-unfixable = []
+extend-select = ["I001"]
+unfixable = []
+dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
+
+[tool.ruff.lint.isort]
+combine-as-imports = true
+
+[tool.mypy]
+exclude = ["utils", "scripts"]
+implicit_optional = true
+disable_error_code = ["import-untyped", "no-untyped-def", "unused-ignore", "misc"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "session"
+console_output_style="count"
+log_cli = true
+log_cli_level = "DEBUG"
+addopts = [
+    "-vvv",
+    "--cov",
+    "--cov-branch",
+    "--cache-clear",
+    "--capture=tee-sys",
+    "--cov-fail-under=80",
+    "--cov-report=term-missing",
+    "--cov-report=xml",
+    "--cov-report=html",
+    "--maxfail=1",
+    "--pastebin=failed",
+    "-p no:warnings",
+]
+
+[tool.coverage.run]
+branch = true
+omit = ["chat_bot/tests/*"]
+
+[tool.coverage.report]
+# Regexes for lines to exclude from consideration
+exclude_also = [
+    "pragma: no cover",
+    "raise ",
+    "except "
+]
+ignore_errors = true
+show_missing = true
+skip_empty = true
+
+[tool.coverage.html]
+directory = "coverage_html_report"

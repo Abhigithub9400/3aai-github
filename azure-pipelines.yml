@@ -1,0 +1,91 @@
+trigger:
+  branches:
+    include:
+      - master
+      - develop
+      - feature/*
+      - bugfix/*
+      - release/*
+      - hotfix/*
+
+pool:
+  vmImage: "ubuntu-latest"
+
+stages:
+  - stage: RunQualityChecks
+    displayName: "Quality Checks"
+    jobs:
+      - job: PEP8Checks
+        displayName: "Pre-Commit"
+        steps:
+          - task: UsePythonVersion@0
+            inputs:
+              versionSpec: '3.11'
+              addToPath: true
+
+          - task: Bash@3
+            displayName: "Install Tox"
+            inputs:
+              targetType: "inline"
+              script: |
+                python -m pip install --upgrade pip
+                pip install tox
+            continueOnError: false
+
+          - task: Bash@3
+            displayName: "Run Pre-Commit"
+            inputs:
+              targetType: "inline"
+              script: |
+                tox -vvv -e pre-commit
+            continueOnError: false
+
+          - task: Bash@3
+            displayName: "Run Test"
+            inputs:
+              targetType: "inline"
+              script: |
+                tox -vvv -e testing
+
+          - task: PublishTestResults@2
+            condition: succeededOrFailed()
+            inputs:
+              testRunner: 'JUnit'
+              testResultsFiles: '**/test-*.xml'
+              testRunTitle: 'Publish test results for Python $(python.version)'
+
+          - task: PublishCodeCoverageResults@1
+            inputs:
+              codeCoverageTool: Cobertura
+              summaryFileLocation: '$(System.DefaultWorkingDirectory)/coverage.xml'
+
+          - task: SonarQubePrepare@7
+            displayName: 'Prepare analysis on SonarCloud'
+            inputs:
+              SonarQube: 'sonarqube'
+              scannerMode: 'CLI'
+              configMode: 'manual'
+              cliProjectKey: '3AAI'
+              cliProjectName: '360InControl'
+              cliSources: '.'
+              extraProperties: |
+                  sonar.python.coverage.reportPaths=$(System.DefaultWorkingDirectory)/coverage.xml
+                  sonar.exclusions=**/tests/**
+  - stage: "Build_Stage"
+    jobs:
+    - job: Build
+      displayName: Build
+      timeoutInMinutes: 360
+      cancelTimeoutInMinutes: 5
+      steps:
+       - task: Docker@2
+         inputs:
+           containerRegistry: 'docker _Pits'
+           repository: '$(dockerrepo)'
+           command: 'build'
+           Dockerfile: 'dockerfile'
+       - task: Docker@2
+         inputs:
+           containerRegistry: 'docker _Pits'
+           repository: '$(dockerrepo)'
+           command: 'push'

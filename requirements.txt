@@ -1,0 +1,15 @@
+async_cache==1.1.1
+click==8.1.7
+colorlog==6.8.2
+cryptography==43.0.1
+fastapi==0.115.5
+langchain==0.3.7
+langchain_openai==0.2.8
+pydantic==2.9.2
+pydantic_settings==2.6.1
+PyJWT==2.10.0
+qdrant-client== 1.10.1
+tenacity==8.2.3
+uvicorn[standard]==0.32.0
+uvloop==0.21.0; sys_platform == 'linux'
+websockets==14.1

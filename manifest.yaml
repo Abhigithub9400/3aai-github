@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: aai-deployment
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: aai
+  template:
+    metadata:
+      labels:
+        app: aai
+    spec:
+      containers:
+      - name: aai-container
+        image: abhijithdockerhub/3aai:v1
+        ports:
+        - containerPort: 80
+        env:
+        - name: ENVIRONMENT
+          value: "production"
+        - name: WORKERS
+          value: "1"
+        - name: QDRANT_CLOUD
+          value: "true"
+        - name: QDRANT_URL
+          value: "https://qdrant.mypits.org"
+        - name: QDRANT_API_KEY
+          value: "mqbglPIm1s4MrKcHalNMRhKYR9noUT_QxBSX8TXrtXdJgFFUUc67sQ"
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: aai-service
+spec:
+  selector:
+    app: aai
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 80
+  type: LoadBalancer

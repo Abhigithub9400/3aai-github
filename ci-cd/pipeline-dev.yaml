@@ -1,0 +1,133 @@
+trigger:
+ branches:
+   include:
+     - development
+
+pool:
+  name: '3AAI'
+
+variables:
+- group: 3aai-dev
+- name: variableConfiguration
+
+stages:
+  - stage: "QualityTest"
+    displayName: "Quality Checks"
+    jobs:
+      - job: PEP8Checks
+        displayName: "Pre-Commit and Tests"
+        timeoutInMinutes: 360
+        cancelTimeoutInMinutes: 5
+        steps:
+          # Install Python 3.11
+          # - task: Bash@3
+          #   displayName: "Install Python 3.11"
+          #   inputs:
+          #     targetType: "inline"
+          #     script: |
+          #       sudo apt-get update
+          #       sudo apt-get install -y software-properties-common
+          #       sudo add-apt-repository ppa:deadsnakes/ppa -y
+          #       sudo apt-get install -y python3.11 python3.11-dev python3.11-venv python3-pip
+          #       sudo update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.11 1
+          #       sudo update-alternatives --set python3 /usr/bin/python3.11
+          #       python3 --version
+
+          # Install Dependencies
+          - task: Bash@3
+            displayName: "Update setuptools and virtualenv"
+            inputs:
+                  targetType: "inline"
+                  script: |
+                    python3.11 -m pip install --upgrade setuptools virtualenv
+
+          # - task: Bash@3
+          #   displayName: "Install Dependencies (pip, setuptools, tox, virtualenv)"
+          #   inputs:
+          #     targetType: "inline"
+          #     script: |
+          #       python3.11 -m pip install --upgrade pip
+          #       python3.11 -m pip install --upgrade tox
+          #       python3.11 -m pip install setuptools tox virtualenv
+          #   continueOnError: false
+
+          # Run Pre-Commit Hooks
+          - task: Bash@3
+            displayName: "Run Pre-Commit"
+            inputs:
+              targetType: 'inline'
+              script: 'tox -vvv -e pre-commit'
+            continueOnError: false
+
+          # Run Tests
+          - task: Bash@3
+            displayName: "Run Tests"
+            inputs:
+              targetType: "inline"
+              script: |
+                tox -vvv -e testing
+
+          # Publish Test Results
+          - task: PublishTestResults@2
+            condition: succeededOrFailed()
+            inputs:
+              testRunner: 'JUnit'
+              testResultsFiles: '**/test-*.xml'
+              testRunTitle: 'Python Test Results'
+
+          # Publish Code Coverage
+          - task: PublishCodeCoverageResults@1
+            inputs:
+              codeCoverageTool: Cobertura
+              summaryFileLocation: '$(System.DefaultWorkingDirectory)/coverage.xml'
+
+          # Prepare SonarQube Analysis
+          - task: SonarQubePrepare@4
+            displayName: "Prepare analysis on SonarQube"
+            inputs:
+              SonarQube: 'SonarQube'
+              scannerMode: 'CLI'
+              configMode: 'manual'
+              cliProjectKey: '3AAI-API'
+              cliProjectName: '3AAI-API'
+              cliSources: '.'
+              extraProperties: |
+                sonar.python.coverage.reportPaths=$(System.DefaultWorkingDirectory)/coverage.xml
+                sonar.exclusions=**/tests/**
+
+          # Run SonarQube Analysis
+          - task: SonarQubeAnalyze@4
+            displayName: "Run SonarQube Analysis"
+            continueOnError: True 
+
+          # Publish SonarQube Results
+          - task: SonarQubePublish@4
+            displayName: "Publish SonarQube Results"
+            inputs:
+              pollingTimeoutSec: '300'
+
+  - stage: "Build_Stage"
+    displayName: "Build Stage"
+    jobs:
+      - job: Build
+        displayName: "Build Docker Image and Push"
+        timeoutInMinutes: 360
+        cancelTimeoutInMinutes: 5
+        steps:
+
+          # Build Docker Image
+          - task: Docker@2
+            displayName: "Build Docker Image"
+            inputs:
+              containerRegistry: 'Docker'
+              repository: '$(dockerrepo)'
+              command: 'build'
+              Dockerfile: 'Dockerfile'
+
+          # Push Docker Image
+          - task: Docker@2
+            displayName: "Push Docker Image"
+            inputs:
+              containerRegistry: 'Docker'
+              repository: '$(dockerrepo)'
+              command: 'push'

@@ -1,0 +1,19 @@
+services:
+  chat_bot:
+    build:
+      context: .  # This specifies the current directory as the build context
+      dockerfile: Dockerfile  # This specifies the Dockerfile to use
+    ports:
+      - "8080:80"  # Maps host port 8080 to container port 80
+    environment:
+      QDRANT_CLOUD: ${QDRANT_CLOUD}
+      QDRANT_API_KEY: ${QDRANT_API_KEY}
+      QDRANT_URL: ${QDRANT_URL}
+      WORKERS: ${WORKERS}
+    command: ["production"]
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "http://localhost:80/"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
